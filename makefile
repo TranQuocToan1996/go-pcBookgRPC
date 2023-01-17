@@ -1,5 +1,6 @@
-.Phony: gen protocopy clean tests
-gen:
+.Phony: gen protocopy clean tests server client
+serverport=8081
+gen: 
 	protoc -I proto --go_out=pb --go_opt=paths=source_relative \
 	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
 	proto/*.proto
@@ -12,3 +13,9 @@ clean:
 
 tests:
 	go test -cover -race -timeout 1s ./...
+
+server:
+	go run cmd/server/*.go -serverport ${serverport}
+
+client:
+	go run cmd/client/*.go -serverport ${serverport}
