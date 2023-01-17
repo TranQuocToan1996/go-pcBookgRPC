@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package pb;
 
-option go_package = "github.com/TranQuocToan1996/go-pcBookgRPC";
+option go_package = "github.com/TranQuocToan1996/pb";
 
 option java_package        = "pcbookJava";
 option java_multiple_files = true;  // Big file -> small one
