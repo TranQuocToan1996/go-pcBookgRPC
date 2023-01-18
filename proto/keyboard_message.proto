@@ -2,11 +2,9 @@ syntax = "proto3";
 
 package pb;
 
-option go_package = "github.com/TranQuocToan1996/pb";
-
-option java_package        = "pcbookJava";
-option java_multiple_files = true; // Big file -> small one
-
+option go_package          = "github.com/TranQuocToan1996/pb";
+option java_package        = "com.gitlab.techschool.pcbook.pb";
+option java_multiple_files = true;
 
 message Keyboard {
     enum Layout {

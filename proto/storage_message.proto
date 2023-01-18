@@ -2,19 +2,19 @@ syntax = "proto3";
 
 package pb;
 
-option go_package = "github.com/TranQuocToan1996/pb";
-
-option java_package        = "pcbookJava";
-option java_multiple_files = true;  // Big file -> small one
+option go_package          = "github.com/TranQuocToan1996/pb";
+option java_package = "com.gitlab.techschool.pcbook.pb";
+option java_multiple_files = true;
 
 import "memory_message.proto";
 
 message Storage {
-    enum Driver {
-        UNKNOWN = 0;
-        HDD = 1;
-        SSD = 2;
-    }
-    Driver driver = 1;
-    Memory memory = 2;
+  enum Driver {
+    UNKNOWN = 0;
+    HDD = 1;
+    SSD = 2;
+  }
+
+  Driver driver = 1;
+  Memory memory = 2;
 }
