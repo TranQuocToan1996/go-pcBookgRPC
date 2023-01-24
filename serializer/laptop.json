@@ -1,62 +1,62 @@
 {
-	"id":  "977e8971-f38b-4f24-a307-b045b25710ca",
-	"brand":  "Lenovo",
-	"name":  "Thinkpad P53",
-	"cpu":  {
-		"brand":  "AMD",
-		"name":  "Ryzen 3 PRO 3200GE",
-		"numberCores":  5,
-		"numberThreads":  8,
-		"minGhz":  2.880509227472824,
-		"maxGhz":  3.9113409081897483
+	"id": "7a63dc08-6b39-4cfc-915e-ee32ec70eddf",
+	"brand": "Dell",
+	"name": "Alienware",
+	"cpu": {
+		"brand": "Intel",
+		"name": "Core i3-1005G1",
+		"numberCores": 4,
+		"numberThreads": 12,
+		"minGhz": 2.8153511505751756,
+		"maxGhz": 3.003873254032915
 	},
-	"ram":  {
-		"value":  "45",
-		"unit":  "GIGABYTE"
+	"ram": {
+		"value": "9",
+		"unit": "GIGABYTE"
 	},
-	"gpus":  [
+	"gpus": [
 		{
-			"brand":  "Nvidia",
-			"name":  "RTX 2070",
-			"minGhz":  1.1335663851822906,
-			"maxGhz":  1.3838654140679052,
-			"memory":  {
-				"value":  "6",
-				"unit":  "GIGABYTE"
+			"brand": "AMD",
+			"name": "RX 590",
+			"minGhz": 1.3262699572617418,
+			"maxGhz": 1.990141414817155,
+			"memory": {
+				"value": "3",
+				"unit": "GIGABYTE"
 			}
 		}
 	],
-	"storages":  [
+	"storages": [
 		{
-			"driver":  "SSD",
-			"memory":  {
-				"value":  "778",
-				"unit":  "GIGABYTE"
+			"driver": "SSD",
+			"memory": {
+				"value": "989",
+				"unit": "GIGABYTE"
 			}
 		},
 		{
-			"driver":  "HDD",
-			"memory":  {
-				"value":  "3",
-				"unit":  "TERABYTE"
+			"driver": "HDD",
+			"memory": {
+				"value": "3",
+				"unit": "TERABYTE"
 			}
 		}
 	],
-	"screen":  {
-		"sizeInch":  16.09819,
-		"resolution":  {
-			"width":  6625,
-			"height":  3727
+	"screen": {
+		"sizeInch": 16.556116,
+		"resolution": {
+			"width": 2887,
+			"height": 1624
 		},
-		"panel":  "IPS",
-		"multitouch":  true
+		"panel": "IPS",
+		"multitouch": true
 	},
-	"keyboard":  {
-		"layout":  "AZERTY",
-		"backlit":  true
+	"keyboard": {
+		"layout": "QWERTZ",
+		"backlit": true
 	},
-	"weightKg":  2.858340299592407,
-	"priceUsd":  2860.1670167805814,
-	"releaseYear":  2019,
-	"updatedAt":  "2023-01-24T13:59:22.901376Z"
+	"weightKg": 2.991585848804051,
+	"priceUsd": 3060.6188011630265,
+	"releaseYear": 2018,
+	"updatedAt": "2023-01-24T17:13:09.738827Z"
 }

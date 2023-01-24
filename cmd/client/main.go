@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/TranQuocToan1996/go-pcBookgRPC/pb"
@@ -27,8 +30,89 @@ func main() {
 	}
 
 	laptopClient := pb.NewLaptopServiceClient(conn)
+	testUploadImage(laptopClient)
+
+}
+
+func uploadImage(laptopClient pb.LaptopServiceClient, laptopID string, path string) *pb.UploadImageResponse {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancel()
+
+	stream, err := laptopClient.UploadImage(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req := &pb.UploadImageRequest{
+		Data: &pb.UploadImageRequest_Info{
+			Info: &pb.ImageInfo{
+				LaptopId:  laptopID,
+				ImageType: filepath.Ext(path),
+			},
+		},
+	}
+
+	err = stream.Send(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reader := bufio.NewReader(file)
+	buffer := make([]byte, 1024)
+
+	size := 0
+
+	for {
+		n, err := reader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil
+		}
+
+		size += n
+
+		req := &pb.UploadImageRequest{
+			Data: &pb.UploadImageRequest_ChunkData{
+				ChunkData: buffer[:n],
+			},
+		}
+		err = stream.Send(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Readsize:", size)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("receive id %v and size %v from server reponse", res.Id, res.Size)
+
+	return res
+}
+
+func testCreateLaptop(laptopClient pb.LaptopServiceClient) {
+	createLaptop(laptopClient, sample.NewLaptop())
+}
+
+func testUploadImage(laptopClient pb.LaptopServiceClient) {
+	laptop := sample.NewLaptop()
+	createLaptop(laptopClient, laptop)
+	uploadImage(laptopClient, laptop.GetId(), "tmp/laptop.png")
+}
+
+func testSearchLaptop(laptopClient pb.LaptopServiceClient) {
 	for i := 0; i < 10; i++ {
-		createLaptop(laptopClient)
+		createLaptop(laptopClient, sample.NewLaptop())
 	}
 
 	filter := &pb.Filter{
@@ -39,15 +123,6 @@ func main() {
 	}
 
 	searchLaptop(laptopClient, filter)
-
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	// defer cancel()
-	// res, err := laptopClient.CreateLaptop(ctx, &pb.CreateLaptopRequest{Laptop: sample.NewLaptop()})
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// log.Printf("create laptop with id: %v", res.Id)
 }
 
 func searchLaptop(laptopClient pb.LaptopServiceClient, filter *pb.Filter) {
@@ -73,8 +148,7 @@ func searchLaptop(laptopClient pb.LaptopServiceClient, filter *pb.Filter) {
 	}
 }
 
-func createLaptop(laptopClient pb.LaptopServiceClient) {
-	laptop := sample.NewLaptop()
+func createLaptop(laptopClient pb.LaptopServiceClient, laptop *pb.Laptop) {
 
 	laptop.Id = ""
 	req := &pb.CreateLaptopRequest{

@@ -68,7 +68,7 @@ func TestServerSaveLaptop(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			req := &pb.CreateLaptopRequest{Laptop: tc.laptop}
-			server := service.NewLaptopServer(tc.store)
+			server := service.NewLaptopServer(tc.store, nil)
 			res, err := server.CreateLaptop(context.TODO(), req)
 			if tc.code == codes.OK {
 				require.NoError(t, err)

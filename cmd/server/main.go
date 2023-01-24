@@ -11,12 +11,19 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	imageFolder = "./img"
+)
+
 func main() {
 	port := flag.String("serverport", "8080", "server port")
 	flag.Parse()
 	log.Printf("starting server on port %v", *port)
 
-	server := service.NewLaptopServer(service.NewInMemoryLaptopStore())
+	laptopStore := service.NewInMemoryLaptopStore()
+	imageStore := service.NewDiskImageStore(imageFolder)
+
+	server := service.NewLaptopServer(laptopStore, imageStore)
 	grpcServer := grpc.NewServer()
 	pb.RegisterLaptopServiceServer(grpcServer, server)
 
