@@ -6,7 +6,8 @@ gen:
 	proto/*.proto
 
 protocopy:
-	cp proto/*.proto ../pcbook-Java/app/src/main/proto
+	@echo "If error need fix path"
+	cp proto/*.proto ../pcbook-Java/src/main/proto
 
 clean:
 	rm pb/*.go
