@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/TranQuocToan1996/go-pcBookgRPC/pb"
@@ -16,6 +17,7 @@ var (
 type LaptopStore interface {
 	Save(context.Context, *pb.Laptop) error
 	Find(context.Context, string) (*pb.Laptop, error)
+	Search(context.Context, *pb.Filter, func(laptop *pb.Laptop) error) error
 }
 
 type InMemoryLaptopStore struct {
@@ -60,5 +62,69 @@ func (i *InMemoryLaptopStore) Find(ctx context.Context, id string) (*pb.Laptop, 
 		return nil, ctx.Err()
 	default:
 		return i.data[id], nil
+	}
+}
+
+func (i *InMemoryLaptopStore) Search(ctx context.Context, filter *pb.Filter,
+	found func(laptop *pb.Laptop) error) error {
+	i.mutex.RLock()
+	defer i.mutex.RUnlock()
+
+	for _, laptop := range i.data {
+
+		log.Print("checking laptop id", laptop.Id)
+		if ctx.Err() != nil {
+			log.Printf("context cancel with err %v", ctx.Err())
+		}
+
+		if isQualified(filter, laptop) {
+			err := found(laptop)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func isQualified(filter *pb.Filter, laptop *pb.Laptop) bool {
+	if laptop.GetPriceUsd() > filter.GetMaxPriceUsd() {
+		return false
+	}
+
+	if laptop.GetCpu().GetNumberCores() < filter.GetMinCpuCores() {
+		return false
+	}
+
+	if laptop.GetCpu().GetMinGhz() < filter.GetMinCpuGhz() {
+		return false
+	}
+
+	if toBit(laptop.GetRam()) < toBit(filter.MinRam) {
+		return false
+	}
+
+	return true
+}
+
+func toBit(memory *pb.Memory) uint64 {
+	val := memory.GetValue()
+
+	switch memory.GetUnit() {
+	case pb.Memory_BIT:
+		return val
+	case pb.Memory_BYTE:
+		return val << 3
+	case pb.Memory_KILOBYTE:
+		return val << 13
+	case pb.Memory_MEGABYTE:
+		return val << 23
+	case pb.Memory_GIGABYTE:
+		return val << 33
+	case pb.Memory_TERABYTE:
+		return val << 43
+	default:
+		return 0
 	}
 }
