@@ -1,10 +1,14 @@
 package service_test
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/TranQuocToan1996/go-pcBookgRPC/pb"
@@ -136,5 +140,83 @@ func TestClientSearchLaptop(t *testing.T) {
 	}
 
 	require.Equal(t, found, len(expectedIDs))
+
+}
+
+func TestUploadImage(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	folder := "../tmp"
+
+	laptopStore := service.NewInMemoryLaptopStore()
+	imageStore := service.NewDiskImageStore(folder)
+	laptop := sample.NewLaptop()
+	err := laptopStore.Save(ctx, laptop)
+	require.NoError(t, err)
+
+	_, addr, err := startTestLaptopServer(laptopStore, imageStore)
+	require.NoError(t, err)
+	client, err := newClientLaptop(addr)
+	require.NoError(t, err)
+	imagePath := fmt.Sprintf("%s/laptop.png", folder)
+
+	file, err := os.Open(imagePath)
+	require.NoError(t, err)
+	defer file.Close()
+
+	stream, err := client.UploadImage(ctx)
+	require.NoError(t, err)
+	ext := filepath.Ext(imagePath)
+
+	req := &pb.UploadImageRequest{
+		Data: &pb.UploadImageRequest_Info{
+			Info: &pb.ImageInfo{
+				LaptopId:  laptop.GetId(),
+				ImageType: ext,
+			},
+		},
+	}
+
+	err = stream.Send(req)
+	if err != nil {
+		err2 := stream.RecvMsg(nil)
+		log.Fatal(err, err2)
+	}
+
+	reader := bufio.NewReader(file)
+	buffer := make([]byte, service.MaxChunkSize)
+
+	size := 0
+
+	for {
+		n, err := reader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+
+		size += n
+
+		req := &pb.UploadImageRequest{
+			Data: &pb.UploadImageRequest_ChunkData{
+				ChunkData: buffer[:n],
+			},
+		}
+		err = stream.Send(req)
+		require.NoError(t, err)
+		log.Println("Readsize:", size)
+	}
+
+	res, err := stream.CloseAndRecv()
+	require.NoError(t, err)
+	require.NotZero(t, res.GetId())
+	require.Equal(t, size, int(res.Size))
+
+	testImagePath := fmt.Sprintf("%s/%s%s", folder, res.GetId(), ext)
+	require.FileExists(t, testImagePath)
+	require.NoError(t, os.Remove(testImagePath))
+
+	log.Printf("receive id %v and size %v from server reponse", res.Id, res.Size)
 
 }

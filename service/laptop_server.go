@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	maxChunkSize = 1 << 20
+	MaxChunkSize = 1 << 20
 )
 
 type LaptopServer struct {
@@ -117,19 +117,30 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 	log.Printf("receiver an image upload request from laptopID %s with type %s",
 		laptopID, imageType)
 
-	// laptop, err := s.laptopStore.Find(context.TODO(), laptopID)
-	// if err != nil {
-	// 	return status.Errorf(codes.Internal, "error when finding laptop %s", err.Error())
-	// }
-	// if laptop == nil {
-	// 	return status.Errorf(codes.NotFound, "not found laptop %s", laptopID)
-	// }``
+	laptop, err := s.laptopStore.Find(context.TODO(), laptopID)
+	if err != nil {
+		return status.Errorf(codes.Internal, "error when finding laptop %s", err.Error())
+	}
+	if laptop == nil {
+		return status.Errorf(codes.NotFound, "not found laptop %s", laptopID)
+	}
 
 	imageData := bytes.NewBuffer(nil)
 	imageSize := 0
 
 	for log.Print("Start saving"); ; {
-		log.Print("receiving data")
+		log.Print("receiving data chunk at chunk size ", imageSize)
+
+		if stream.Context().Err() == context.DeadlineExceeded {
+			log.Printf("deadline exceed with laptop id %v", laptop.Id)
+			return status.Error(codes.DeadlineExceeded, "deadline exceed with laptop")
+		}
+
+		if stream.Context().Err() == context.Canceled {
+			log.Printf("request cancel by client with laptop id %v", laptop.Id)
+			return status.Error(codes.Canceled, "request cancel by client")
+		}
+
 		req, err := stream.Recv()
 		if err == io.EOF {
 			log.Print("no more image data")
@@ -141,7 +152,7 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 
 		chunk := req.GetChunkData()
 		size := len(chunk)
-		if size > maxChunkSize {
+		if size > MaxChunkSize {
 			return status.Errorf(codes.InvalidArgument, "too big image chunk")
 		}
 		imageSize += size

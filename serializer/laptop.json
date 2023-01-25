@@ -1,27 +1,27 @@
 {
-	"id": "7a63dc08-6b39-4cfc-915e-ee32ec70eddf",
-	"brand": "Dell",
-	"name": "Alienware",
+	"id": "d093de97-07b0-492d-88e8-3f532ee527ed",
+	"brand": "Apple",
+	"name": "Macbook Air",
 	"cpu": {
 		"brand": "Intel",
-		"name": "Core i3-1005G1",
+		"name": "Xeon E-2286M",
 		"numberCores": 4,
-		"numberThreads": 12,
-		"minGhz": 2.8153511505751756,
-		"maxGhz": 3.003873254032915
+		"numberThreads": 5,
+		"minGhz": 2.8717007583021377,
+		"maxGhz": 4.2582112939557195
 	},
 	"ram": {
-		"value": "9",
+		"value": "20",
 		"unit": "GIGABYTE"
 	},
 	"gpus": [
 		{
-			"brand": "AMD",
-			"name": "RX 590",
-			"minGhz": 1.3262699572617418,
-			"maxGhz": 1.990141414817155,
+			"brand": "Nvidia",
+			"name": "GTX 1660-Ti",
+			"minGhz": 1.3531012849026234,
+			"maxGhz": 1.7689184824587052,
 			"memory": {
-				"value": "3",
+				"value": "4",
 				"unit": "GIGABYTE"
 			}
 		}
@@ -30,33 +30,31 @@
 		{
 			"driver": "SSD",
 			"memory": {
-				"value": "989",
+				"value": "710",
 				"unit": "GIGABYTE"
 			}
 		},
 		{
 			"driver": "HDD",
 			"memory": {
-				"value": "3",
+				"value": "1",
 				"unit": "TERABYTE"
 			}
 		}
 	],
 	"screen": {
-		"sizeInch": 16.556116,
+		"sizeInch": 16.892632,
 		"resolution": {
-			"width": 2887,
-			"height": 1624
+			"width": 4266,
+			"height": 2400
 		},
-		"panel": "IPS",
-		"multitouch": true
+		"panel": "IPS"
 	},
 	"keyboard": {
-		"layout": "QWERTZ",
-		"backlit": true
+		"layout": "QWERTZ"
 	},
-	"weightKg": 2.991585848804051,
-	"priceUsd": 3060.6188011630265,
+	"weightKg": 1.734984062202639,
+	"priceUsd": 1591.800214751098,
 	"releaseYear": 2018,
-	"updatedAt": "2023-01-24T17:13:09.738827Z"
+	"updatedAt": "2023-01-25T10:35:40.399863Z"
 }

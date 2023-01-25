@@ -13,6 +13,7 @@ import (
 
 	"github.com/TranQuocToan1996/go-pcBookgRPC/pb"
 	"github.com/TranQuocToan1996/go-pcBookgRPC/sample"
+	"github.com/TranQuocToan1996/go-pcBookgRPC/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -59,11 +60,12 @@ func uploadImage(laptopClient pb.LaptopServiceClient, laptopID string, path stri
 
 	err = stream.Send(req)
 	if err != nil {
-		log.Fatal(err)
+		err2 := stream.RecvMsg(nil)
+		log.Fatal(err, err2)
 	}
 
 	reader := bufio.NewReader(file)
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, service.MaxChunkSize)
 
 	size := 0
 
@@ -85,7 +87,8 @@ func uploadImage(laptopClient pb.LaptopServiceClient, laptopID string, path stri
 		}
 		err = stream.Send(req)
 		if err != nil {
-			log.Fatal(err)
+			err2 := stream.RecvMsg(nil)
+			log.Fatal(err, err2)
 		}
 		log.Println("Readsize:", size)
 	}
@@ -150,7 +153,6 @@ func searchLaptop(laptopClient pb.LaptopServiceClient, filter *pb.Filter) {
 
 func createLaptop(laptopClient pb.LaptopServiceClient, laptop *pb.Laptop) {
 
-	laptop.Id = ""
 	req := &pb.CreateLaptopRequest{
 		Laptop: laptop,
 	}
