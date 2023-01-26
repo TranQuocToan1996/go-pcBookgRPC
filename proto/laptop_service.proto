@@ -50,7 +50,7 @@ message RateLaptopRequest {
 message RateLaptopResponse {
     string laptop_id     = 1;
     uint32 rated_count   = 2;
-    double avarage_score = 3;
+    double average_score = 3;
 }
 
 service LaptopService {
