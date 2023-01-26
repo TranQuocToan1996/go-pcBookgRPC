@@ -1,4 +1,4 @@
-.Phony: gen protocopy clean tests server client
+.PHONY: gen protocopy clean tests server client evan
 serverport=8080
 gen:  
 	protoc -I proto --go_out=pb --go_opt=paths=source_relative \
@@ -20,3 +20,7 @@ server:
 
 client:
 	go run cmd/client/*.go -serverport ${serverport}
+
+evan:
+	@echo "to install please visit https://github.com/ktr0731/evans"
+	evans -r repl -p ${serverport}
