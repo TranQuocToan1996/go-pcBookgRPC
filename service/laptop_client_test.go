@@ -25,7 +25,7 @@ func TestClientCreateLaptop(t *testing.T) {
 
 	laptopStore := service.NewInMemoryLaptopStore()
 
-	_, address, err := startTestLaptopServer(laptopStore, nil)
+	_, address, err := startTestLaptopServer(laptopStore, nil, nil)
 	require.NoError(t, err)
 	client, err := newClientLaptop(address)
 	require.NoError(t, err)
@@ -48,8 +48,8 @@ func TestClientCreateLaptop(t *testing.T) {
 
 }
 
-func startTestLaptopServer(store service.LaptopStore, imageStore service.ImageStore) (server *service.LaptopServer, address string, err error) {
-	server = service.NewLaptopServer(store, imageStore)
+func startTestLaptopServer(laptopStore service.LaptopStore, imageStore service.ImageStore, ratingStore service.RatingStore) (server *service.LaptopServer, address string, err error) {
+	server = service.NewLaptopServer(laptopStore, imageStore, ratingStore)
 	gprcServer := grpc.NewServer()
 	pb.RegisterLaptopServiceServer(gprcServer, server)
 
@@ -111,7 +111,7 @@ func TestClientSearchLaptop(t *testing.T) {
 		}
 	}
 
-	_, address, err := startTestLaptopServer(store, nil)
+	_, address, err := startTestLaptopServer(store, nil, nil)
 	require.NoError(t, err)
 
 	client, err := newClientLaptop(address)
@@ -155,7 +155,7 @@ func TestUploadImage(t *testing.T) {
 	err := laptopStore.Save(ctx, laptop)
 	require.NoError(t, err)
 
-	_, addr, err := startTestLaptopServer(laptopStore, imageStore)
+	_, addr, err := startTestLaptopServer(laptopStore, imageStore, nil)
 	require.NoError(t, err)
 	client, err := newClientLaptop(addr)
 	require.NoError(t, err)

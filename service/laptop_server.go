@@ -22,12 +22,14 @@ type LaptopServer struct {
 
 	laptopStore LaptopStore
 	imageStore  ImageStore
+	ratingStore RatingStore
 }
 
-func NewLaptopServer(laptopStore LaptopStore, imageStore ImageStore) *LaptopServer {
+func NewLaptopServer(laptopStore LaptopStore, imageStore ImageStore, ratingStore RatingStore) *LaptopServer {
 	return &LaptopServer{
 		laptopStore: laptopStore,
 		imageStore:  imageStore,
+		ratingStore: ratingStore,
 	}
 }
 
@@ -52,17 +54,12 @@ func (s *LaptopServer) CreateLaptop(
 		laptop.Id = id.String()
 	}
 
-	if ctx.Err() == context.DeadlineExceeded {
-		log.Printf("deadline exceed with laptop id %v", laptop.Id)
-		return nil, status.Error(codes.DeadlineExceeded, "deadline exceed with laptop")
+	err := contextError(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if ctx.Err() == context.Canceled {
-		log.Printf("request cancel by client with laptop id %v", laptop.Id)
-		return nil, status.Error(codes.Canceled, "request cancel by client")
-	}
-
-	err := s.laptopStore.Save(ctx, laptop)
+	err = s.laptopStore.Save(ctx, laptop)
 	if err != nil {
 		code := codes.Internal
 		if errors.Is(err, ErrAlreadyExist) {
@@ -131,14 +128,9 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 	for log.Print("Start saving"); ; {
 		log.Print("receiving data chunk at chunk size ", imageSize)
 
-		if stream.Context().Err() == context.DeadlineExceeded {
-			log.Printf("deadline exceed with laptop id %v", laptop.Id)
-			return status.Error(codes.DeadlineExceeded, "deadline exceed with laptop")
-		}
-
-		if stream.Context().Err() == context.Canceled {
-			log.Printf("request cancel by client with laptop id %v", laptop.Id)
-			return status.Error(codes.Canceled, "request cancel by client")
+		err := contextError(stream.Context())
+		if err != nil {
+			return err
 		}
 
 		req, err := stream.Recv()
@@ -176,6 +168,66 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 	err = stream.SendAndClose(res)
 	if err != nil {
 		return status.Errorf(codes.Internal, "error when sending response %v", err)
+	}
+
+	return nil
+}
+
+func (s *LaptopServer) RateLaptop(stream pb.LaptopService_RateLaptopServer) error {
+	for {
+		err := contextError(stream.Context())
+		if err != nil {
+			return err
+		}
+
+		req, err := stream.Recv()
+		if err == io.EOF {
+			log.Print("rate laptop req has no more data")
+			break
+		}
+		if err != nil {
+			return status.Errorf(codes.Unknown, "cant receive rating request: %v", err)
+		}
+
+		laptopID, score := req.LaptopId, req.Score
+		log.Printf("[Rating laptop] got laptop ID %v and score %v", laptopID, score)
+		found, err := s.laptopStore.Find(stream.Context(), laptopID)
+		if err != nil {
+			return status.Errorf(codes.Internal, "[Rating lapttop] cant find laptop with id %v: %v", laptopID, err)
+		}
+		if found == nil {
+			return status.Errorf(codes.NotFound, "[Rating lapttop] cant find laptop with id %v: %v", laptopID, err)
+		}
+
+		rating, err := s.ratingStore.Add(laptopID, score)
+		if err != nil {
+			return status.Errorf(codes.Internal, "[Rating lapttop] cant add rate to store %v: %v", laptopID, err)
+		}
+
+		res := &pb.RateLaptopResponse{
+			LaptopId:     laptopID,
+			RatedCount:   rating.Count,
+			AvarageScore: rating.Sum / float64(rating.Count),
+		}
+
+		err = stream.Send(res)
+		if err != nil {
+			return status.Errorf(codes.Internal, "[Rating lapttop] unexpect error when sending back resp %v: %v", laptopID, err)
+		}
+	}
+
+	return nil
+}
+
+func contextError(ctx context.Context) error {
+	if ctx.Err() == context.DeadlineExceeded {
+		log.Print("deadline exceed")
+		return status.Error(codes.DeadlineExceeded, "deadline exceed with laptop")
+	}
+
+	if ctx.Err() == context.Canceled {
+		log.Print("request cancel by client")
+		return status.Error(codes.Canceled, "request cancel by client")
 	}
 
 	return nil

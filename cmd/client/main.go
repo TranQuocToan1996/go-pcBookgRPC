@@ -25,17 +25,92 @@ func main() {
 	flag.Parse()
 	log.Printf("calling on port %v", *port)
 	adddress := fmt.Sprintf("0.0.0.0:%v", *port)
-	conn, err := grpc.Dial(adddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(adddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	laptopClient := pb.NewLaptopServiceClient(conn)
-	testUploadImage(laptopClient)
+	testRateLaptop(laptopClient)
 
 }
 
-func uploadImage(laptopClient pb.LaptopServiceClient, laptopID string, path string) *pb.UploadImageResponse {
+type laptopRate struct {
+	laptopID string
+	score    float64
+}
+
+func rateLaptop(laptopClient pb.LaptopServiceClient, list []laptopRate) error {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	stream, err := laptopClient.RateLaptop(ctx)
+	if err != nil {
+		return err
+	}
+
+	chanErr := make(chan error)
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				log.Print("[RateLaptop] EOF no more response from client.")
+				chanErr <- nil
+				return
+			}
+			if err != nil {
+				chanErr <- err
+				return
+			}
+			log.Print("receive resp ", res)
+		}
+	}()
+
+	for _, obj := range list {
+		req := &pb.RateLaptopRequest{
+			LaptopId: obj.laptopID,
+			Score:    obj.score,
+		}
+
+		err := stream.Send(req)
+		if err != nil {
+			return fmt.Errorf("cant send stream req: %v - %v", err, stream.RecvMsg(nil))
+		}
+
+		log.Print("send req", req)
+	}
+
+	err = stream.CloseSend()
+	if err != nil {
+		return fmt.Errorf("cant send close request: %v", err)
+	}
+
+	return <-chanErr
+
+}
+
+func testRateLaptop(laptopClient pb.LaptopServiceClient) {
+	list := [3]laptopRate{}
+	for i := 0; i < len(list); i++ {
+		laptop := sample.NewLaptop()
+		list[i].laptopID = laptop.GetId()
+		list[i].score = sample.RandomLaptopScore()
+		createLaptop(laptopClient, laptop)
+	}
+
+	for i := 0; i < len(list); i++ {
+		err := rateLaptop(laptopClient, list[:])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+}
+
+func uploadImage(laptopClient pb.LaptopServiceClient,
+	laptopID string, path string) *pb.UploadImageResponse {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
