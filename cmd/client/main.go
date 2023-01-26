@@ -1,16 +1,19 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/TranQuocToan1996/go-pcBookgRPC/client"
 	"github.com/TranQuocToan1996/go-pcBookgRPC/pb"
 	"github.com/TranQuocToan1996/go-pcBookgRPC/sample"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -31,13 +34,43 @@ func authMethods() map[string]bool {
 	}
 }
 
+func loadTLSCredentials() (credentials.TransportCredentials, error) {
+	clientCert, err := tls.LoadX509KeyPair("cert/client-cert.pem",
+		"cert/client-key.pem")
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := os.ReadFile("cert/ca-cert.pem")
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+
+	if !certPool.AppendCertsFromPEM(cert) {
+		return nil, fmt.Errorf("fail server cert")
+	}
+
+	config := &tls.Config{
+		Certificates: []tls.Certificate{clientCert},
+		RootCAs:      certPool,
+	}
+
+	return credentials.NewTLS(config), nil
+}
+
 func main() {
 	port := flag.String("serverport", "8080", "server port")
 	flag.Parse()
 	log.Printf("calling on port %v", *port)
 	adddress := fmt.Sprintf("0.0.0.0:%v", *port)
+	loadTLSCredentials, err := loadTLSCredentials()
+	if err != nil {
+		log.Fatal(err)
+	}
 	cc1, err := grpc.Dial(adddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(loadTLSCredentials))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +82,7 @@ func main() {
 	}
 
 	cc2, err := grpc.Dial(adddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(loadTLSCredentials),
 		grpc.WithUnaryInterceptor(interceptor.Unary()),
 		grpc.WithStreamInterceptor(interceptor.Stream()),
 	)

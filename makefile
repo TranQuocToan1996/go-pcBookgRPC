@@ -1,4 +1,4 @@
-.PHONY: gen protocopy clean tests server client evan
+.PHONY: gen protocopy clean tests server client evan cert
 serverport=8080
 gen:  
 	protoc -I proto --go_out=pb --go_opt=paths=source_relative \
@@ -24,3 +24,6 @@ client:
 evan:
 	@echo "to install please visit https://github.com/ktr0731/evans"
 	evans -r repl -p ${serverport}
+
+cert:
+	cd cert; chmod +x gen.sh; ./gen.sh; cd ..
