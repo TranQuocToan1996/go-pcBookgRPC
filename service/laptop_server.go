@@ -193,10 +193,10 @@ func (s *LaptopServer) RateLaptop(stream pb.LaptopService_RateLaptopServer) erro
 		log.Printf("[Rating laptop] got laptop ID %v and score %v", laptopID, score)
 		found, err := s.laptopStore.Find(stream.Context(), laptopID)
 		if err != nil {
-			return status.Errorf(codes.Internal, "[Rating lapttop] cant find laptop with id %v: %v", laptopID, err)
+			return status.Errorf(codes.Internal, "[Rating lapttop] error when find laptopID %v: %v", laptopID, err)
 		}
 		if found == nil {
-			return status.Errorf(codes.NotFound, "[Rating lapttop] cant find laptop with id %v: %v", laptopID, err)
+			return status.Errorf(codes.NotFound, "[Rating lapttop] cant find laptop with id %v", laptopID)
 		}
 
 		rating, err := s.ratingStore.Add(laptopID, score)

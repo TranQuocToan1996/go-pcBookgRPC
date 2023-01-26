@@ -14,6 +14,7 @@ import (
 	"github.com/TranQuocToan1996/go-pcBookgRPC/sample"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -62,15 +63,22 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 
 func main() {
 	port := flag.String("serverport", "8080", "server port")
+	enableTLS := flag.Bool("tls", false, "enable SSL/TLS")
 	flag.Parse()
-	log.Printf("calling on port %v", *port)
+	log.Printf("calling on port %v, tls: %t", *port, *enableTLS)
 	adddress := fmt.Sprintf("0.0.0.0:%v", *port)
-	loadTLSCredentials, err := loadTLSCredentials()
-	if err != nil {
-		log.Fatal(err)
+
+	transportOtps := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	if *enableTLS {
+		loadTLSCredentials, err := loadTLSCredentials()
+		if err != nil {
+			log.Fatal(err)
+		}
+		transportOtps = grpc.WithTransportCredentials(loadTLSCredentials)
 	}
-	cc1, err := grpc.Dial(adddress,
-		grpc.WithTransportCredentials(loadTLSCredentials))
+
+	cc1, err := grpc.Dial(adddress, transportOtps)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,7 +90,7 @@ func main() {
 	}
 
 	cc2, err := grpc.Dial(adddress,
-		grpc.WithTransportCredentials(loadTLSCredentials),
+		transportOtps,
 		grpc.WithUnaryInterceptor(interceptor.Unary()),
 		grpc.WithStreamInterceptor(interceptor.Stream()),
 	)

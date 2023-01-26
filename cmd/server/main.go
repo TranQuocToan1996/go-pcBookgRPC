@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
@@ -19,33 +18,20 @@ import (
 )
 
 const (
-	imageFolder = "./img"
+	imageFolder       = "./img"
+	secretKey         = "Need to generate key"
+	tokenDuration     = time.Hour
+	adminRole         = "admin"
+	userRole          = "user"
+	laptopServicePath = "/pb.LaptopService/"
 )
-
-const (
-	admin = "admin"
-	user  = "user"
-)
-
-func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-
-	log.Println("Unary interceptor", info.FullMethod)
-
-	return handler(ctx, req)
-}
-
-func streamInterceptor(server interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	log.Println("Stream interceptor", info.FullMethod)
-
-	return handler(server, stream)
-}
 
 func seedUsers(userStore service.UserStore) error {
-	err := createUsers(userStore, "admin1", "admin1", admin)
+	err := createUsers(userStore, "admin1", "admin1", adminRole)
 	if err != nil {
 		return err
 	}
-	return createUsers(userStore, "user1", "user1", user)
+	return createUsers(userStore, "user1", "user1", userRole)
 }
 
 func createUsers(userStore service.UserStore,
@@ -59,22 +45,12 @@ func createUsers(userStore service.UserStore,
 }
 
 func accessibleRoles() map[string][]string {
-
-	const (
-		laptopServicePath = "/pb.LaptopService/"
-	)
-
 	return map[string][]string{
-		laptopServicePath + "CreateLaptop": {admin},
-		laptopServicePath + "UploadImage":  {admin},
-		laptopServicePath + "RateLaptop":   {admin, user},
+		laptopServicePath + "CreateLaptop": {adminRole},
+		laptopServicePath + "UploadImage":  {adminRole},
+		laptopServicePath + "RateLaptop":   {adminRole, userRole},
 	}
 }
-
-const (
-	secretKey     = "Need to generate key"
-	tokenDuration = time.Hour
-)
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
 	serverCert, err := tls.LoadX509KeyPair("cert/server-cert.pem",
@@ -97,9 +73,11 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 
 	config := &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
-		// ClientAuth:   tls.NoClientCert, // When server not care about client call
+
 		ClientAuth: tls.RequireAndVerifyClientCert, // mutual TLS
 		ClientCAs:  certPool,                       // mutual TLS
+
+		// ClientAuth:   tls.NoClientCert, // Client no need to auth
 	}
 
 	return credentials.NewTLS(config), nil
@@ -107,8 +85,9 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 
 func main() {
 	port := flag.String("serverport", "8080", "server port")
+	enableTLS := flag.Bool("tls", false, "enable SSL/TLS")
 	flag.Parse()
-	log.Printf("starting server on port %v", *port)
+	log.Printf("starting server on port: %v, TLS: %v", *port, *enableTLS)
 
 	userStore := service.NewInMemoryUserStore()
 	err := seedUsers(userStore)
@@ -125,16 +104,20 @@ func main() {
 
 	laptopServer := service.NewLaptopServer(laptopStore, imageStore, ratingStore)
 
-	loadTLSCredentials, err := loadTLSCredentials()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	grpcServer := grpc.NewServer(
-		grpc.Creds(loadTLSCredentials),
+	serverOTPs := []grpc.ServerOption{
 		grpc.UnaryInterceptor(interceptor.Unary()),
 		grpc.StreamInterceptor(interceptor.Stream()),
-	)
+	}
+
+	if *enableTLS {
+		loadTLSCredentials, err := loadTLSCredentials()
+		if err != nil {
+			log.Fatal(err)
+		}
+		serverOTPs = append(serverOTPs, grpc.Creds(loadTLSCredentials))
+	}
+
+	grpcServer := grpc.NewServer(serverOTPs...)
 
 	pb.RegisterLaptopServiceServer(grpcServer, laptopServer)
 	pb.RegisterAuthServiceServer(grpcServer, authServer)
