@@ -125,3 +125,4 @@ func (i *AuthInterceptor) Stream() grpc.StreamClientInterceptor {
 		return streamer(i.attachToken(ctx), desc, cc, method, opts...)
 	}
 }
+w

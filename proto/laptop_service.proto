@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package pb;
 
-option go_package          = "github.com/TranQuocToan1996/pb";
+import "google/api/annotations.proto";
+
+option go_package          = ".;pb";
 option java_package        = "com.gitlab.techschool.pcbook.pb";
 option java_multiple_files = true;
 
@@ -54,13 +56,32 @@ message RateLaptopResponse {
 }
 
 service LaptopService {
-    rpc CreateLaptop(CreateLaptopRequest) returns (CreateLaptopResponse) {};
+    rpc CreateLaptop(CreateLaptopRequest) returns (CreateLaptopResponse) {
+        option (google.api.http) = {
+            post: "/v1/laptop/create"
+            body: "*"
+        };
+    };
 
     rpc SearchLaptop(SearchLaptopRequest)
-        returns (stream SearchLaptopResponse) {};
+        returns (stream SearchLaptopResponse) {
+        option (google.api.http) = {
+            get: "/v1/laptop/search"
+        };
+        };
 
-    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {};
+    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {
+        option (google.api.http) = {
+            post: "/v1/laptop/upload_image"
+            body: "*"
+        };
+    };
 
     rpc RateLaptop(stream RateLaptopRequest)
-        returns (stream RateLaptopResponse) {};
+        returns (stream RateLaptopResponse) {
+        option (google.api.http) = {
+            post: "/v1/laptop/rate"
+            body: "*"
+        };
+        };
 }

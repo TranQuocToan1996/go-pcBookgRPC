@@ -1,12 +1,10 @@
 .PHONY: gen protocopy clean tests server client evan cert serverTLS clientTLS server1
 serverport1=50051
-serverport2=50052
+serverrest=50052
 serverport=8080
 nginx=8080
 gen:  
-	protoc -I proto --go_out=pb --go_opt=paths=source_relative \
-	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
-	proto/*.proto
+	protoc --proto_path=proto proto/*.proto  --go_out=:pb --go-grpc_out=:pb --grpc-gateway_out=:pb --openapiv2_out=:swagger
 
 protocopy:
 	@echo "If error need fix path"
@@ -18,17 +16,17 @@ clean:
 tests:
 	go test -cover -race -timeout 1s ./...
 
-server:
+serverGRPC:
 	go run cmd/server/*.go -serverport ${serverport1}
 
-server1:
-	go run cmd/server/*.go -serverport ${serverport2}
+serverREST:
+	go run cmd/server/*.go -serverport ${serverrest} -rest
 
-serverTLS:
+serverTLSREST:
+go run cmd/server/*.go -serverport ${serverrest} -tls -rest
+
+serverTLSGRPC:
 	go run cmd/server/*.go -serverport ${serverport1} -tls
-
-serverTLS1:
-	go run cmd/server/*.go -serverport ${serverport2} -tls
 
 client:
 	go run cmd/client/*.go -serverport ${nginx}
