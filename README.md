@@ -17,25 +17,25 @@
 - [Java version](https://github.com/TranQuocToan1996/pcbook-Java) (Server/client): https://github.com/TranQuocToan1996/pcbook-Java
 
 - First running:
-1. Setup SSL/TLS. 
-+ Generates certificate/key in cert folder.
-+ Config tls.Config struct as part of grpc options (client and server).
-+ Config nginx.conf
-+ Config ports/flags in makefile (client/server)
+    1. Setup SSL/TLS. 
+        + Generates certificate/key in cert folder.
+        + Config tls.Config struct as part of grpc options (client and server).
+        + Config nginx.conf
+        + Config ports/flags in makefile (client/server)
 
-2. Install dependencies: 
-+ At root dir.
-```
-go get ./... && go mod tidy
-```
-+ Install 3rd dependencies gRPC APIs, nginx,...
+    2. Install dependencies: 
+        + At root dir.
+        ```
+        go get ./... && go mod tidy
+        ```
+        + Install 3rd dependencies gRPC APIs, nginx,...
 
-3. Start REST/gRPC server: -rest flag for REST one. Default gRPC one.
+    3. Start REST/gRPC server: -rest flag for REST one. Default gRPC one.
 
-4. Client calling:
-+ gRPC: Use [evans](https://github.com/ktr0731/evans) or clients in Go/Java to call.
-+ REST: curl, [REST client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) or [Postman](https://www.postman.com/).
+    4. Client calling:
+        + gRPC: Use [evans](https://github.com/ktr0731/evans) or clients in Go/Java to call.
+        + REST: curl, [REST client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) or [Postman](https://www.postman.com/).
 
 - TODO tasks:
-1. Connect to Database.
-2. Move const variable to config file/env var.
+    1. Connect to Database.
+    2. Move const variable to config file/env var.
