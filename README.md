@@ -39,3 +39,7 @@
 - TODO tasks:
     1. Connect to Database.
     2. Move const variable to config file/env var.
+    3. Change: https://github.com/dgrijalva/jwt-go -> https://github.com/golang-jwt/jwt due to security problem.
+    ```
+    jwt-go allows attackers to bypass intended access restrictions in situations with []string{} for m["aud"] (which is allowed by the specification). Because the type assertion fails, "" is the value of aud. This is a security problem if the JWT token is presented to a service that lacks its own audience check. There is no patch available and users of jwt-go are advised to migrate to golang-jwt at version 3.2.1
+    ```
