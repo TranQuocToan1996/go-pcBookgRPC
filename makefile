@@ -1,4 +1,4 @@
-.PHONY: gen protocopy clean tests server client evan cert serverTLS clientTLS server1
+.PHONY: gen protocopy clean tests server client evan cert serverTLSREST clientTLS serverGRPC serverTLSGRPC clientTLS
 serverport1=50051
 serverrest=50052
 serverport=8080
@@ -23,7 +23,7 @@ serverREST:
 	go run cmd/server/*.go -serverport ${serverrest} -rest
 
 serverTLSREST:
-go run cmd/server/*.go -serverport ${serverrest} -tls -rest
+	go run cmd/server/*.go -serverport ${serverrest} -tls -rest
 
 serverTLSGRPC:
 	go run cmd/server/*.go -serverport ${serverport1} -tls
